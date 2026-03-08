@@ -1,43 +1,43 @@
 import torch
 from torchvision import transforms, datasets
-import torch.nn as nn
+import torch.nn as nn   #神经网络模块
 from torch.utils.data import DataLoader, random_split
-from PIL import Image
-train_transforms = transforms.Compose([
-    transforms.Resize((224, 224)),  # 统一尺寸
-    transforms.RandomRotation(10),  # 数据增强
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
+from PIL import Image   #打开处理图像文件
+train_transforms = transforms.Compose([    #训练集
+    transforms.Resize((224, 224)),  # 统一尺寸，将图像调整为固定的224*224
+    transforms.RandomRotation(10),  # 数据增强（随机旋转图像十度，增加多样性）
+    transforms.RandomHorizontalFlip(),    #以50%的概率翻转图像
+    transforms.ToTensor(),   #转化为Pytorch张量，便于使用GPU加强计算
     transforms.Normalize(mean=[0.485, 0.456, 0.406],  # ImageNet统计参数
                          std=[0.229, 0.224, 0.225])
 ])
 
-test_transforms = transforms.Compose([
+test_transforms = transforms.Compose([    #验证集，与训练集的差别在于没有数据增强
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-# 加载数据集（假设目录结构为：data/train/class_x/*.jpg）
+# 加载数据集
 dataset = datasets.ImageFolder(root='data/train/TestA', transform=train_transforms)
 
 # 划分训练集和验证集
-train_size = int(0.8 * len(dataset))
-val_size = len(dataset) - train_size
+train_size = int(0.8 * len(dataset))             #80%的训练集
+val_size = len(dataset) - train_size		#20%的验证集
 train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
-# 创建DataLoader
+# 创建DataLoader，用于批量加载数据
 batch_size = 32
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)  # 修改num_workers为0
 val_loader = DataLoader(val_dataset, batch_size=batch_size, num_workers=0)  # 修改num_workers为0
 
 
-class LeukocyteCNN(nn.Module):
-    def __init__(self, num_classes=5):
+class LeukocyteCNN(nn.Module):    #定义模型
+    def __init__(self, num_classes=5):    #默认输出5个WBC类别
         super(LeukocyteCNN, self).__init__()
 
         # 特征提取层（保持不变）
-        self.features = nn.Sequential(
+        self.features = nn.Sequential(    #特征提取层，包含4个卷积块
             nn.Conv2d(3, 64, kernel_size=3, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
@@ -63,7 +63,7 @@ class LeukocyteCNN(nn.Module):
         self.classifier = nn.Sequential(
             nn.Flatten(),
             nn.Linear(512 * 14 * 14, num_classes)  # 直接映射到类别数
-        )
+        )  #将特征展开为一维向量输入到logistic模型中
 
         self.feature_outputs = []
 
@@ -75,15 +75,15 @@ class LeukocyteCNN(nn.Module):
 
     # 其他方法保持不变...
     def save_model(self, path):
-        """保存模型参数"""
+        #保存模型参数
         torch.save(self.state_dict(), path)
         print(f"模型参数已保存到 {path}")
 
     def load_model(self, path):
-        """加载模型参数"""
+        #加载模型参数
         self.load_state_dict(torch.load(path))
         print(f"模型参数已从 {path} 加载")
-    def predict(self, image_input, device=None):
+    def predict(self, image_input, device=None):    #预测函数
         """
         预测输入图像的类别
 
