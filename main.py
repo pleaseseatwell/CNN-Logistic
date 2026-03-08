@@ -84,20 +84,7 @@ class LeukocyteCNN(nn.Module):    #定义模型
         self.load_state_dict(torch.load(path))
         print(f"模型参数已从 {path} 加载")
     def predict(self, image_input, device=None):    #预测函数
-        """
-        预测输入图像的类别
-
-        参数:
-            image_input: 可以是以下形式之一:
-                - PIL.Image 对象
-                - 图像文件路径 (str)
-                - 已经预处理过的torch.Tensor (形状为 [C, H, W] 或 [B, C, H, W])
-            device: 指定运行设备 (None表示自动选择)
-
-        返回:
-            如果是单张图像: 返回预测类别(int)和类别概率(torch.Tensor)
-            如果是批量图像: 返回预测类别列表(List[int])和类别概率(torch.Tensor)
-        """
+ 
         if device is None:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.to(device)
